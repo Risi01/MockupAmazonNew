@@ -2,143 +2,90 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import "./App.css";
 
-function StatsPage({ analytics, summary, darkMode }) {
-  return (
-    <section className="analytics-panel">
-      <div className="analytics-header">
-        <h2>Business Analytics Dashboard</h2>
-        <p>Top-selling products and estimated revenue.</p>
-      </div>
+const fallbackProducts = [
+  {
+    id: 1,
+    name: "Wireless Headphones",
+    category: "Electronics",
+    price: 99.99,
+    rating: 4.5,
+    image:
+      "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80",
+    description:
+      "Comfortable wireless headphones with clear sound and noise-reducing ear cushions."
+  },
+  {
+    id: 2,
+    name: "Running Shoes",
+    category: "Fashion",
+    price: 59.99,
+    rating: 4.2,
+    image:
+      "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80",
+    description:
+      "Lightweight running shoes designed for everyday training, walking, and comfort."
+  },
+  {
+    id: 3,
+    name: "Coffee Maker",
+    category: "Home",
+    price: 79.99,
+    rating: 4.0,
+    image:
+      "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=600&q=80",
+    description:
+      "Easy-to-use coffee maker for quick brewing at home, in dorms, or in small offices."
+  },
+  {
+    id: 4,
+    name: "Smartphone",
+    category: "Electronics",
+    price: 699.99,
+    rating: 4.7,
+    image:
+      "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=600&q=80",
+    description:
+      "Modern smartphone with a large display, fast performance, and a clean design."
+  },
+  {
+    id: 5,
+    name: "Jacket",
+    category: "Fashion",
+    price: 89.99,
+    rating: 4.3,
+    image:
+      "https://images.unsplash.com/photo-1544022613-e87ca75a784a?auto=format&fit=crop&w=600&q=80",
+    description:
+      "Stylish everyday jacket that works well for casual outfits and cooler weather."
+  },
+  {
+    id: 6,
+    name: "Blender",
+    category: "Home",
+    price: 49.99,
+    rating: 4.1,
+    image:
+      "https://images.unsplash.com/photo-1570222094114-d054a817e56b?auto=format&fit=crop&w=600&q=80",
+    description:
+      "Compact blender for smoothies, shakes, and simple kitchen preparation."
+  }
+];
 
-      {summary && (
-        <div className="analytics-summary">
-          <div className="summary-card">
-            <span className="summary-label">Products Analyzed</span>
-            <span className="summary-value">{summary.totalProducts}</span>
-          </div>
-          <div className="summary-card">
-            <span className="summary-label">Units Sold</span>
-            <span className="summary-value">{summary.totalUnitsSold}</span>
-          </div>
-          <div className="summary-card">
-            <span className="summary-label">Total Revenue</span>
-            <span className="summary-value">${summary.totalRevenue.toFixed(2)}</span>
-          </div>
-          <div className="summary-card">
-            <span className="summary-label">Top Product</span>
-            <span className="summary-value">{summary.topProduct}</span>
-          </div>
-        </div>
-      )}
+const fallbackAnalytics = [
+  { id: 6, product: "Blender", category: "Home", totalSold: 8, revenue: 399.92 },
+  { id: 2, product: "Running Shoes", category: "Fashion", totalSold: 7, revenue: 419.93 },
+  { id: 1, product: "Wireless Headphones", category: "Electronics", totalSold: 6, revenue: 599.94 },
+  { id: 3, product: "Coffee Maker", category: "Home", totalSold: 5, revenue: 399.95 },
+  { id: 4, product: "Smartphone", category: "Electronics", totalSold: 3, revenue: 2099.97 },
+  { id: 5, product: "Jacket", category: "Fashion", totalSold: 3, revenue: 269.97 }
+];
 
-      <div className="charts-container">
-        <div className="chart-wrapper">
-          <h3>Product Popularity (Units Sold)</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={analytics}>
-              <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? "#444" : "#ccc"} />
-              <XAxis dataKey="product" tick={{fontSize: 12, fill: darkMode ? "#ccc" : "#666"}} interval={0} angle={-25} textAnchor="end" height={80}/>
-              <YAxis tick={{fill: darkMode ? "#ccc" : "#666"}} />
-              <Tooltip contentStyle={{ backgroundColor: darkMode ? "#1e2630" : "#fff", borderColor: darkMode ? "#3a4553" : "#ccc", color: darkMode ? "#fff" : "#333" }} />
-              <Legend />
-              <Bar dataKey="totalSold" fill="#8884d8" name="Units Sold" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="chart-wrapper">
-          <h3>Revenue by Product ($)</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={analytics}>
-              <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? "#444" : "#ccc"} />
-              <XAxis dataKey="product" tick={{fontSize: 12, fill: darkMode ? "#ccc" : "#666"}} interval={0} angle={-25} textAnchor="end" height={80}/>
-              <YAxis tick={{fill: darkMode ? "#ccc" : "#666"}} />
-              <Tooltip contentStyle={{ backgroundColor: darkMode ? "#1e2630" : "#fff", borderColor: darkMode ? "#3a4553" : "#ccc", color: darkMode ? "#fff" : "#333" }} />
-              <Legend />
-              <Bar dataKey="revenue" fill="#82ca9d" name="Revenue ($)" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function LoginPage({ onLogin, darkMode }) {
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Mock login logic
-    onLogin({ name: isSignUp ? name : (email.split("@")[0] || "User"), email });
-  };
-
-  return (
-    <div className="login-page-wrapper">
-      <div className="login-card">
-        <h2>{isSignUp ? "Create Account" : "Sign-In"}</h2>
-        <p className="login-subtitle">
-          {isSignUp
-            ? "Join our premium shopping community today."
-            : "Welcome back! Please enter your details to continue."}
-        </p>
-        <form onSubmit={handleSubmit}>
-          {isSignUp && (
-            <div className="login-field">
-              <label>Full Name</label>
-              <input
-                type="text"
-                placeholder="Enter your name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </div>
-          )}
-          <div className="login-field">
-            <label>Email Address</label>
-            <input
-              type="email"
-              placeholder="name@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          <div className="login-field">
-            <label>Password</label>
-            <input
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          <button type="submit" className="login-submit-btn">
-            {isSignUp ? "Create Account" : "Sign In"}
-          </button>
-        </form>
-        <p className="login-disclaimer">
-          By signing up, you agree to our Terms of Service and Privacy Policy.
-        </p>
-        <div className="login-divider">
-          <h5>{isSignUp ? "Already have an account?" : "New here?"}</h5>
-        </div>
-        <button
-          type="button"
-          className="login-toggle-btn"
-          onClick={() => setIsSignUp(!isSignUp)}
-        >
-          {isSignUp ? "Sign In instead" : "Create an account"}
-        </button>
-      </div>
-    </div>
-  );
-}
+const fallbackSummary = {
+  totalProducts: 6,
+  totalUnitsSold: 32,
+  totalRevenue: 4189.68,
+  topProduct: "Blender"
+};
 
 function App() {
   const [currentView, setCurrentView] = useState("shop");
@@ -175,30 +122,75 @@ function App() {
 
   const categories = useMemo(() => ["All", "Electronics", "Fashion", "Home"], []);
 
+  const applyLocalFilters = () => {
+    let filtered = [...fallbackProducts];
+
+    if (searchQuery) {
+      filtered = filtered.filter((p) =>
+        p.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    if (category !== "All") {
+      filtered = filtered.filter((p) => p.category === category);
+    }
+
+    if (minPrice) {
+      filtered = filtered.filter((p) => p.price >= Number(minPrice));
+    }
+
+    if (maxPrice) {
+      filtered = filtered.filter((p) => p.price <= Number(maxPrice));
+    }
+
+    if (sort === "price_asc") {
+      filtered.sort((a, b) => a.price - b.price);
+    } else if (sort === "price_desc") {
+      filtered.sort((a, b) => b.price - a.price);
+    } else if (sort === "name_asc") {
+      filtered.sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    setProducts(filtered);
+  };
+
   const fetchProducts = async () => {
-    const params = new URLSearchParams();
+    try {
+      const params = new URLSearchParams();
 
-    if (searchQuery) params.append("q", searchQuery);
-    if (category !== "All") params.append("category", category);
-    if (minPrice) params.append("min_price", minPrice);
-    if (maxPrice) params.append("max_price", maxPrice);
-    if (sort) params.append("sort", sort);
+      if (searchQuery) params.append("q", searchQuery);
+      if (category !== "All") params.append("category", category);
+      if (minPrice) params.append("min_price", minPrice);
+      if (maxPrice) params.append("max_price", maxPrice);
+      if (sort) params.append("sort", sort);
 
-    const queryString = params.toString();
-    const url = queryString
-      ? `${API_BASE}/api/products?${queryString}`
-      : `${API_BASE}/api/products`;
+      const queryString = params.toString();
+      const url = queryString
+        ? `${API_BASE}/api/products?${queryString}`
+        : `${API_BASE}/api/products`;
 
-    const response = await fetch(url);
-    const data = await response.json();
-    setProducts(data);
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Backend unavailable");
+
+      const data = await response.json();
+      setProducts(data);
+    } catch (error) {
+      applyLocalFilters();
+    }
   };
 
   const fetchAnalytics = async () => {
-    const response = await fetch(`${API_BASE}/api/analytics/products`);
-    const data = await response.json();
-    setAnalytics(data.analytics || []);
-    setAnalyticsSummary(data.summary || null);
+    try {
+      const response = await fetch(`${API_BASE}/api/analytics/products`);
+      if (!response.ok) throw new Error("Backend unavailable");
+
+      const data = await response.json();
+      setAnalytics(data.analytics || []);
+      setAnalyticsSummary(data.summary || null);
+    } catch (error) {
+      setAnalytics(fallbackAnalytics);
+      setAnalyticsSummary(fallbackSummary);
+    }
   };
 
   useEffect(() => {
@@ -211,16 +203,13 @@ function App() {
     fetchProducts();
   };
 
-  const clearFilters = async () => {
+  const clearFilters = () => {
     setSearchQuery("");
     setCategory("All");
     setMinPrice("");
     setMaxPrice("");
     setSort("");
-
-    const response = await fetch(`${API_BASE}/api/products`);
-    const data = await response.json();
-    setProducts(data);
+    setProducts(fallbackProducts);
   };
 
   const addToCart = (product) => {
@@ -271,11 +260,6 @@ function App() {
             <div className="topbar-link" onClick={() => setCurrentView("shop")} style={{ cursor: "pointer" }}>
               <span className="small-text">Returns</span>
               <span className="bold-text">& Orders</span>
-            </div>
-
-            <div className="topbar-link" onClick={() => setCurrentView("stats")} style={{ cursor: "pointer" }}>
-              <span className="small-text">Business</span>
-              <span className="bold-text">Dashboard</span>
             </div>
 
             <button
@@ -430,6 +414,59 @@ function App() {
         ) : (
           <StatsPage analytics={analytics} summary={analyticsSummary} darkMode={darkMode} />
         )}
+
+        <section className="analytics-panel">
+  <div className="analytics-header">
+    <h2>Business Analytics</h2>
+    <p>Top-selling products and estimated revenue based on generated order data.</p>
+  </div>
+
+  {analyticsSummary && (
+    <div className="analytics-summary">
+      <div className="summary-card">
+        <span className="summary-label">Products Analyzed</span>
+        <span className="summary-value">{analyticsSummary.totalProducts}</span>
+      </div>
+      <div className="summary-card">
+        <span className="summary-label">Units Sold</span>
+        <span className="summary-value">{analyticsSummary.totalUnitsSold}</span>
+      </div>
+      <div className="summary-card">
+        <span className="summary-label">Total Revenue</span>
+        <span className="summary-value">
+          ${analyticsSummary.totalRevenue.toFixed(2)}
+        </span>
+      </div>
+      <div className="summary-card">
+        <span className="summary-label">Top Product</span>
+        <span className="summary-value">{analyticsSummary.topProduct}</span>
+      </div>
+    </div>
+  )}
+
+  <div className="analytics-table-wrap">
+    <table className="analytics-table">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Category</th>
+          <th>Total Sold</th>
+          <th>Revenue</th>
+        </tr>
+      </thead>
+      <tbody>
+        {analytics.map((item) => (
+          <tr key={item.id}>
+            <td>{item.product}</td>
+            <td>{item.category}</td>
+            <td>{item.totalSold}</td>
+            <td>${item.revenue.toFixed(2)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</section>
       </main>
 
       {showCart && (

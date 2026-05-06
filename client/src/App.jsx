@@ -1,6 +1,91 @@
 import { useEffect, useMemo, useState } from "react";
 import "./App.css";
 
+const fallbackProducts = [
+  {
+    id: 1,
+    name: "Wireless Headphones",
+    category: "Electronics",
+    price: 99.99,
+    rating: 4.5,
+    image:
+      "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80",
+    description:
+      "Comfortable wireless headphones with clear sound and noise-reducing ear cushions."
+  },
+  {
+    id: 2,
+    name: "Running Shoes",
+    category: "Fashion",
+    price: 59.99,
+    rating: 4.2,
+    image:
+      "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80",
+    description:
+      "Lightweight running shoes designed for everyday training, walking, and comfort."
+  },
+  {
+    id: 3,
+    name: "Coffee Maker",
+    category: "Home",
+    price: 79.99,
+    rating: 4.0,
+    image:
+      "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=600&q=80",
+    description:
+      "Easy-to-use coffee maker for quick brewing at home, in dorms, or in small offices."
+  },
+  {
+    id: 4,
+    name: "Smartphone",
+    category: "Electronics",
+    price: 699.99,
+    rating: 4.7,
+    image:
+      "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=600&q=80",
+    description:
+      "Modern smartphone with a large display, fast performance, and a clean design."
+  },
+  {
+    id: 5,
+    name: "Jacket",
+    category: "Fashion",
+    price: 89.99,
+    rating: 4.3,
+    image:
+      "https://images.unsplash.com/photo-1544022613-e87ca75a784a?auto=format&fit=crop&w=600&q=80",
+    description:
+      "Stylish everyday jacket that works well for casual outfits and cooler weather."
+  },
+  {
+    id: 6,
+    name: "Blender",
+    category: "Home",
+    price: 49.99,
+    rating: 4.1,
+    image:
+      "https://images.unsplash.com/photo-1570222094114-d054a817e56b?auto=format&fit=crop&w=600&q=80",
+    description:
+      "Compact blender for smoothies, shakes, and simple kitchen preparation."
+  }
+];
+
+const fallbackAnalytics = [
+  { id: 6, product: "Blender", category: "Home", totalSold: 8, revenue: 399.92 },
+  { id: 2, product: "Running Shoes", category: "Fashion", totalSold: 7, revenue: 419.93 },
+  { id: 1, product: "Wireless Headphones", category: "Electronics", totalSold: 6, revenue: 599.94 },
+  { id: 3, product: "Coffee Maker", category: "Home", totalSold: 5, revenue: 399.95 },
+  { id: 4, product: "Smartphone", category: "Electronics", totalSold: 3, revenue: 2099.97 },
+  { id: 5, product: "Jacket", category: "Fashion", totalSold: 3, revenue: 269.97 }
+];
+
+const fallbackSummary = {
+  totalProducts: 6,
+  totalUnitsSold: 32,
+  totalRevenue: 4189.68,
+  topProduct: "Blender"
+};
+
 function App() {
   const [products, setProducts] = useState([]);
   const [analytics, setAnalytics] = useState([]);
@@ -18,30 +103,75 @@ function App() {
 
   const categories = useMemo(() => ["All", "Electronics", "Fashion", "Home"], []);
 
+  const applyLocalFilters = () => {
+    let filtered = [...fallbackProducts];
+
+    if (searchQuery) {
+      filtered = filtered.filter((p) =>
+        p.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    if (category !== "All") {
+      filtered = filtered.filter((p) => p.category === category);
+    }
+
+    if (minPrice) {
+      filtered = filtered.filter((p) => p.price >= Number(minPrice));
+    }
+
+    if (maxPrice) {
+      filtered = filtered.filter((p) => p.price <= Number(maxPrice));
+    }
+
+    if (sort === "price_asc") {
+      filtered.sort((a, b) => a.price - b.price);
+    } else if (sort === "price_desc") {
+      filtered.sort((a, b) => b.price - a.price);
+    } else if (sort === "name_asc") {
+      filtered.sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    setProducts(filtered);
+  };
+
   const fetchProducts = async () => {
-    const params = new URLSearchParams();
+    try {
+      const params = new URLSearchParams();
 
-    if (searchQuery) params.append("q", searchQuery);
-    if (category !== "All") params.append("category", category);
-    if (minPrice) params.append("min_price", minPrice);
-    if (maxPrice) params.append("max_price", maxPrice);
-    if (sort) params.append("sort", sort);
+      if (searchQuery) params.append("q", searchQuery);
+      if (category !== "All") params.append("category", category);
+      if (minPrice) params.append("min_price", minPrice);
+      if (maxPrice) params.append("max_price", maxPrice);
+      if (sort) params.append("sort", sort);
 
-    const queryString = params.toString();
-    const url = queryString
-      ? `${API_BASE}/api/products?${queryString}`
-      : `${API_BASE}/api/products`;
+      const queryString = params.toString();
+      const url = queryString
+        ? `${API_BASE}/api/products?${queryString}`
+        : `${API_BASE}/api/products`;
 
-    const response = await fetch(url);
-    const data = await response.json();
-    setProducts(data);
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Backend unavailable");
+
+      const data = await response.json();
+      setProducts(data);
+    } catch (error) {
+      applyLocalFilters();
+    }
   };
 
   const fetchAnalytics = async () => {
-    const response = await fetch(`${API_BASE}/api/analytics/products`);
-    const data = await response.json();
-    setAnalytics(data.analytics || []);
-    setAnalyticsSummary(data.summary || null);
+    try {
+      const response = await fetch(`${API_BASE}/api/analytics/products`);
+      if (!response.ok) throw new Error("Backend unavailable");
+
+      const data = await response.json();
+      setAnalytics(data.analytics || []);
+      setAnalyticsSummary(data.summary || null);
+    } catch (error) {
+      setAnalytics(fallbackAnalytics);
+      setAnalyticsSummary(fallbackSummary);
+    }
   };
 
   useEffect(() => {
@@ -54,16 +184,13 @@ function App() {
     fetchProducts();
   };
 
-  const clearFilters = async () => {
+  const clearFilters = () => {
     setSearchQuery("");
     setCategory("All");
     setMinPrice("");
     setMaxPrice("");
     setSort("");
-
-    const response = await fetch(`${API_BASE}/api/products`);
-    const data = await response.json();
-    setProducts(data);
+    setProducts(fallbackProducts);
   };
 
   const addToCart = (product) => {

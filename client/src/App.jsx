@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import "./App.css";
 
 const fallbackProducts = [
@@ -87,6 +88,8 @@ const fallbackSummary = {
 };
 
 function App() {
+  const [currentView, setCurrentView] = useState("shop");
+  const [user, setUser] = useState(null);
   const [products, setProducts] = useState([]);
   const [analytics, setAnalytics] = useState([]);
   const [analyticsSummary, setAnalyticsSummary] = useState(null);
@@ -97,6 +100,22 @@ function App() {
   const [sort, setSort] = useState("");
   const [cart, setCart] = useState([]);
   const [showCart, setShowCart] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem("darkMode");
+    if (saved !== null) return JSON.parse(saved);
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  });
+
+  useEffect(() => {
+    if (darkMode) {
+      document.body.classList.add("dark");
+    } else {
+      document.body.classList.remove("dark");
+    }
+    localStorage.setItem("darkMode", JSON.stringify(darkMode));
+  }, [darkMode]);
+
+  const toggleDarkMode = () => setDarkMode((prev) => !prev);
   const [cartMessage, setCartMessage] = useState("");
 
   const API_BASE = "http://localhost:3001";
@@ -213,7 +232,7 @@ function App() {
     <div className="page">
       <header className="topbar">
         <div className="topbar-inner">
-          <div className="brand">
+          <div className="brand" onClick={() => setCurrentView("shop")} style={{ cursor: "pointer" }}>
             <span className="brand-main">Mockup</span>
             <span className="brand-accent">Amazon</span>
           </div>
@@ -229,15 +248,34 @@ function App() {
           </form>
 
           <div className="topbar-actions">
-            <div className="topbar-link">
-              <span className="small-text">Hello, Guest</span>
-              <span className="bold-text">Account</span>
+            <div
+              className="topbar-link"
+              onClick={() => user ? setUser(null) : setCurrentView("login")}
+              style={{ cursor: "pointer" }}
+            >
+              <span className="small-text">Hello, {user ? user.name : "Guest"}</span>
+              <span className="bold-text">{user ? "Sign Out" : "Account"}</span>
             </div>
 
-            <div className="topbar-link">
+            <div className="topbar-link" onClick={() => setCurrentView("shop")} style={{ cursor: "pointer" }}>
               <span className="small-text">Returns</span>
               <span className="bold-text">& Orders</span>
             </div>
+
+            <div className="topbar-link" onClick={() => setCurrentView("stats")} style={{ cursor: "pointer" }}>
+              <span className="small-text">Business</span>
+              <span className="bold-text">Dashboard</span>
+            </div>
+
+            <button
+              type="button"
+              className="cart-box"
+              onClick={toggleDarkMode}
+              title="Toggle Dark Mode"
+              style={{ fontSize: "1.2rem", padding: "0 8px" }}
+            >
+              {darkMode ? "☀️" : "🌙"}
+            </button>
 
             <button
               type="button"
@@ -264,7 +302,17 @@ function App() {
       {cartMessage && <div className="cart-message">{cartMessage}</div>}
 
       <main className="main-content">
-        <section className="hero">
+        {currentView === "login" ? (
+          <LoginPage
+            onLogin={(userData) => {
+              setUser(userData);
+              setCurrentView("shop");
+            }}
+            darkMode={darkMode}
+          />
+        ) : currentView === "shop" ? (
+          <>
+            <section className="hero">
           <div className="hero-overlay">
             <h1>Shop smart with MockupAmazon</h1>
             <p>
@@ -367,58 +415,10 @@ function App() {
           </section>
         )}
 
-        <section className="analytics-panel">
-          <div className="analytics-header">
-            <h2>Business Analytics</h2>
-            <p>Top-selling products and estimated revenue based on generated order data.</p>
-          </div>
-
-          {analyticsSummary && (
-            <div className="analytics-summary">
-              <div className="summary-card">
-                <span className="summary-label">Products Analyzed</span>
-                <span className="summary-value">{analyticsSummary.totalProducts}</span>
-              </div>
-              <div className="summary-card">
-                <span className="summary-label">Units Sold</span>
-                <span className="summary-value">{analyticsSummary.totalUnitsSold}</span>
-              </div>
-              <div className="summary-card">
-                <span className="summary-label">Total Revenue</span>
-                <span className="summary-value">
-                  ${analyticsSummary.totalRevenue.toFixed(2)}
-                </span>
-              </div>
-              <div className="summary-card">
-                <span className="summary-label">Top Product</span>
-                <span className="summary-value">{analyticsSummary.topProduct}</span>
-              </div>
-            </div>
-          )}
-
-          <div className="analytics-table-wrap">
-            <table className="analytics-table">
-              <thead>
-                <tr>
-                  <th>Product</th>
-                  <th>Category</th>
-                  <th>Total Sold</th>
-                  <th>Revenue</th>
-                </tr>
-              </thead>
-              <tbody>
-                {analytics.map((item) => (
-                  <tr key={item.id}>
-                    <td>{item.product}</td>
-                    <td>{item.category}</td>
-                    <td>{item.totalSold}</td>
-                    <td>${item.revenue.toFixed(2)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+          </>
+        ) : (
+          <StatsPage analytics={analytics} summary={analyticsSummary} darkMode={darkMode} />
+        )}
       </main>
 
       {showCart && (
